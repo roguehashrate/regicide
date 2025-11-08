@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regicide Rules</title>
+<link rel="icon" type="icon-x" href="/assets/favicon.ico"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* Gruvbox Dark Theme */
+  body {
+    background-color: #282828;
+    color: #ebdbb2;
+    font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+  }
+
+  header {
+    background: #3c3836;
+    padding: 1rem 2rem;
+    text-align: center;
+    border-bottom: 1px solid #504945;
+  }
+
+  h1, h2, h3 {
+    color: #fabd2f;
+    margin-top: 1.5rem;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #3c3836;
+    border: 1px solid #504945;
+    border-radius: 12px;
+  }
+
+  ul, ol {
+    margin: 0.5rem 0 1rem 2rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  strong {
+    color: #fe8019;
+  }
+
+  footer {
+    text-align: center;
+    padding: 1rem;
+    color: #928374;
+  }
+
+  a.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #fabd2f;
+    color: #282828;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    transition: transform 0.08s ease;
+    margin-bottom: 1rem;
+  }
+
+  a.btn:hover {
+    transform: scale(1.05);
+    background-color: #fe8019;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>How to Play</h1>
+</header>
+
+<main>
+  <a href="index.html" class="btn">Back to Game</a>
+
+  <h2>Objective</h2>
+  <p>Defeat all 12 powerful enemies using your hand of cards. Win by defeating the last King. If you cannot discard enough cards to survive an enemy attack, you lose.</p>
+
+  <h2>Setup</h2>
+  <ul>
+    <li>Castle deck: Shuffle 4 Kings, 4 Queens, 4 Jacks (Kings on bottom, then Queens, then Jacks on top).</li>
+    <li>Tavern deck: Shuffle cards 2–10 with 4 Animal Companions and 2 Jesters.</li>
+    <li>Draw 8 cards into your hand.</li>
+    <li>Reveal the top Castle card as the first enemy.</li>
+  </ul>
+
+  <h2>Game Turn</h2>
+  <ol>
+    <li><strong>Step 1 - Play a card:</strong> Play one or more cards from your hand to attack the enemy.</li>
+    <li><strong>Step 2 - Resolve suit powers:</strong> Apply effects based on card suits.</li>
+    <li><strong>Step 3 - Deal damage:</strong> Apply damage to the enemy and check if defeated.</li>
+    <li><strong>Step 4 - Enemy attacks:</strong> Discard cards to survive enemy damage.</li>
+  </ol>
+
+  <h2>Card Suits</h2>
+  <ul>
+    <li><strong>Clubs:</strong> Double damage. Example: 8 of Clubs deals 16 damage.</li>
+    <li><strong>Spades:</strong> Shields against enemy attacks. Effects accumulate until enemy is defeated.</li>
+    <li><strong>Hearts:</strong> Heal from discard. Shuffle discard, place cards equal to attack value beneath Tavern deck.</li>
+    <li><strong>Diamonds:</strong> Draw cards equal to attack value (up to max hand size).</li>
+  </ul>
+
+  <h2>Animal Companions</h2>
+  <p>Aces count as 1 attack and can be paired with one other card. Suit powers apply as normal.</p>
+
+  <h2>Jester / Joker</h2>
+  <ul>
+    <li>Attack value: 0</li>
+    <li>Flip Jesters (max 2 per game) to discard your hand and refill to 8 cards. This does not count as drawing for Diamonds immunity.</li>
+  </ul>
+
+  <h2>Perfect Kill</h2>
+  <p>If total damage equals exactly the enemy's remaining health, the enemy is placed on top of the Tavern deck. Otherwise, it goes to the discard pile.</p>
+
+  <h2>Combos</h2>
+  <p>You can play sets of 2–4 cards of the same number as long as their total value ≤ 10. Animal Companions can only be paired with one other card. Suit powers resolve at total attack value.</p>
+
+  <h2>Winning & Losing</h2>
+  <ul>
+    <li>Win by defeating all Royals.</li>
+    <li>Lose if unable to discard enough cards to survive an enemy attack.</li>
+    <li>Victory ranking based on Jester usage: 0 jokers = Gold, 1 joker = Silver, 2 jokers = Bronze.</li>
+  </ul>
+
+</main>
+
+<footer>
+  Have fun! :)
+</footer>
+
+</body>
+</html>
