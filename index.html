@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Regicide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Gruvbox Dark Theme */
+    body {
+      background-color: #282828;
+      color: #ebdbb2;
+      font-family: 'Courier New', monospace;
+    }
+    h1 {
+      color: #fabd2f;
+    }
+
+    /* Card styles */
+    .card {
+      width: 72px;
+      height: 98px;
+      border-radius: 8px;
+      background: #3c3836;
+      color: #ebdbb2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 6px;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+      transition: transform .08s ease, box-shadow .08s ease;
+    }
+    .card.selected {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 8px 20px rgba(250,189,47,0.5);
+      outline: 2px solid #fabd2f;
+    }
+    .card .rank { font-weight: 700; font-size: 18px; }
+    .card .suit { font-size: 16px; margin-top: 6px; }
+    .suit.hearts, .suit.diamonds { color: #fb4934; }
+    .suit.spades, .suit.clubs { color: #83a598; }
+
+    /* Panels */
+    .panel {
+      background: #3c3836;
+      border: 1px solid #504945;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .panel .title {
+      font-weight: 600;
+      color: #fabd2f;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Hand container */
+    .hand-container {
+      display: flex;
+      overflow-x: auto;
+      gap: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    .hand-container .card { flex-shrink:0; }
+
+    /* Buttons */
+    .btn {
+      padding: 0.3rem 0.8rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.08s ease;
+    }
+    .btn:hover { transform: scale(1.05); }
+
+    .btn-play { background-color: #fabd2f; color: #282828; }
+    .btn-forfeit { background-color: #504945; color: #ebdbb2; }
+    .btn-joker { background-color: #b8bb26; color: #282828; }
+
+    /* Enemy card */
+    .enemy-card {
+      background: #504945;
+      border: 1px solid #665c54;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .enemy-card .stat {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .enemy-card .stat span { font-weight: 700; color: #fabd2f; }
+
+    /* Game log */
+    .game-log {
+      background: #3c3836;
+      border: 1px solid #504945;
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 12rem;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      color: #ebdbb2;
+    }
+
+    .muted { color: #bdae93; font-size: 0.8rem; }
+
+    /* Modal */
+    .modal-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(40, 40, 40, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .modal-box {
+      background-color: #282828;
+      color: #ebdbb2;
+      padding: 20px;
+      border-radius: 8px;
+      max-height: 80%;
+      overflow-y: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    }
+
+    .modal-box button {
+      background-color: #458588;
+      color: #fbf1c7;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .modal-box button:hover {
+      background-color: #83a598;
+    }
+
+
+    /* Layout */
+    @media(min-width:768px){
+      .game-grid { display: grid; grid-template-columns:1fr 2fr; gap:1rem; }
+      .hand-container { display: grid; grid-template-columns: repeat(8, 72px); gap:0.5rem; overflow-x: visible; }
+    }
+  </style>
+</head>
+<body>
+  <div class="max-w-5xl mx-auto p-4">
+    <h1 class="text-3xl mb-4 text-center">Regicide</h1>
+
+    <div id="enemy-card" class="enemy-card mb-4"></div>
+
+    <div class="flex flex-col md:flex-row justify-between mb-4 gap-2">
+      <div class="panel flex-1">
+        <div class="title">Castle</div>
+        <div id="castle-count" class="text-lg font-semibold">--</div>
+      </div>
+      <div class="panel flex-1">
+        <div class="title">Tavern</div>
+        <div id="tavern-count" class="text-lg font-semibold">--</div>
+      </div>
+      <div class="panel flex-1">
+        <div class="title">Discarded</div>
+        <div id="discard-count" class="text-lg font-semibold">--</div>
+      </div>
+    </div>
+
+    <div class="panel mb-4">
+      <div class="flex justify-between items-center mb-2">
+        <div>
+          <div class="muted text-sm"></div>
+          <div class="text-lg font-semibold" id="hand-count">Hand: --</div>
+        </div>
+        <div class="actions flex flex-col sm:flex-row gap-2 sm:gap-2">
+          <button id="play-selected" class="btn btn-play">Play Selected</button>
+          <button id="yield-btn" class="btn btn-forfeit">Forfeit</button>
+          <button id="flip-joker" class="btn btn-joker">Flip Joker</button>
+        </div>
+      </div>
+      <div id="hand" class="hand-container"></div>
+      <div class="mt-2 muted text-sm">Select cards to play a combo (2–5 same rank ≤10) or pair an Ace with one other card.</div>
+    </div>
+
+    <div class="game-log mb-4" id="log"></div>
+    <button id="clear-log" class="muted text-sm mb-2">Clear Log</button>
+  </div>
+
+  <script src="regicide.js"></script>
+</body>
+</html>
