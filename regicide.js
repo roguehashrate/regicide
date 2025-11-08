@@ -241,77 +241,109 @@ function playSelected(){
 }
 
 // Perform play
-function performPlay(cards, selectedIndices){
-  if(!G.enemy) return;
+function performPlay(cards, selectedIndices) {
+  const enemy = G.enemy;
+  if (!enemy) return;
 
-  let immunitySuit = G.enemy.suit;
+  let immunitySuit = enemy.suit; // Enemy immunity
   let damageThisPlay = 0;
   let heartsTotal = 0, diamondsTotal = 0, spadesTotal = 0;
 
-  for(const c of cards){
-    const base = cardValue(c.rank);
+  // Calculate damage and suit effects
+  for (const c of cards) {
+    const base = (c.rank === 'A') ? 1 : cardValue(c.rank);
     let dmg = base;
-    if(c.suit === 'clubs' && c.suit !== immunitySuit) dmg *= 2;
+
+    // Clubs double damage unless blocked by immunity
+    if (c.suit === 'clubs' && !(c.suit === immunitySuit)) dmg *= 2;
+
     damageThisPlay += dmg;
 
-    if(c.suit !== immunitySuit){
-      if(c.suit==='hearts') heartsTotal += base;
-      if(c.suit==='diamonds') diamondsTotal += base;
-      if(c.suit==='spades') spadesTotal += base;
+    // Accumulate suit-specific effects if not blocked by immunity
+    if (c.suit !== immunitySuit) {
+      if (c.suit === 'hearts') heartsTotal += base;
+      if (c.suit === 'diamonds') diamondsTotal += base;
+      if (c.suit === 'spades') spadesTotal += base;
     } else {
       addLog(`Suit power of ${c.rank}${suitSymbol(c.suit)} blocked by enemy immunity.`);
     }
   }
 
-  const toRemove = Array.from(selectedIndices).sort((a,b)=>b-a);
-  for(const idx of toRemove){ G.discard.unshift(G.hand.splice(idx,1)[0]); }
+  // Remove played cards from hand → discard
+  const toRemove = Array.from(selectedIndices).sort((a, b) => b - a);
+  for (const idx of toRemove) {
+    G.discard.unshift(G.hand.splice(idx, 1)[0]);
+  }
   G.selectedIndices.clear();
 
-  if(heartsTotal>0){
-    const d=shuffle(G.discard);
-    const take=d.splice(0,heartsTotal);
-    const newDiscard=[...G.discard];
-    for(const t of take){ const idx=newDiscard.findIndex(x=>x===t); if(idx>=0) newDiscard.splice(idx,1); }
+  // Apply Hearts effect: return cards from discard to tavern
+  if (heartsTotal > 0) {
+    const d = shuffle(G.discard);
+    const take = d.splice(0, heartsTotal);
+    const newDiscard = [...G.discard];
+    for (const t of take) {
+      const idx = newDiscard.findIndex(x => x === t);
+      if (idx >= 0) newDiscard.splice(idx, 1);
+    }
     G.discard = newDiscard;
     G.tavern.push(...take);
     addLog(`Hearts: Returned ${take.length} card(s) beneath the Tavern.`);
   }
 
-  if(diamondsTotal>0){
-    let drawn=0;
-    for(let i=0;i<diamondsTotal;i++){
-      if(G.hand.length>=MAX_HAND_SOLO || G.tavern.length===0) break;
+  // Apply Diamonds effect: draw cards
+  if (diamondsTotal > 0) {
+    let drawn = 0;
+    for (let i = 0; i < diamondsTotal; i++) {
+      if (G.hand.length >= MAX_HAND_SOLO) break;
+      if (G.tavern.length === 0) break;
       G.hand.push(G.tavern.shift());
       drawn++;
     }
     addLog(`Diamonds: Drew ${drawn} card(s).`);
   }
 
-  if(spadesTotal>0){
+  // Apply Spades effect: add shield
+  if (spadesTotal > 0) {
     G.spadeShield += spadesTotal;
     addLog(`Spades: Added shield ${spadesTotal}. Total shield now ${G.spadeShield}.`);
   }
 
+  // Deal damage to enemy
   G.damageOnEnemy += damageThisPlay;
-  const stats = faceStats(G.enemy);
+  const stats = faceStats(enemy);
   addLog(`Dealt ${damageThisPlay} damage to enemy (${Math.min(G.damageOnEnemy, stats.health)}/${stats.health}).`);
 
-  if(G.damageOnEnemy >= stats.health){
-    if(G.damageOnEnemy===stats.health) G.tavern.unshift(G.enemy);
-    else G.discard.unshift(G.enemy);
+  // Check if enemy defeated
+  if (G.damageOnEnemy >= stats.health) {
+    if (G.damageOnEnemy === stats.health) {
+      // Perfect kill → enemy goes to top of tavern
+      G.tavern.unshift(enemy);
+      addLog(`Perfect defeat! ${enemy.rank}${suitSymbol(enemy.suit)} added to the top of your Tavern.`);
+    } else {
+      // Not perfect → enemy goes to discard
+      G.discard.unshift(enemy);
+      addLog(`${enemy.rank}${suitSymbol(enemy.suit)} defeated and sent to discard pile.`);
+    }
 
-    if(G.castle.length===0){ endGame('All Royals defeated — YOU WIN! 🎉'); return; }
-    else {
+    if (G.castle.length === 0) {
+      endGame('All Royals defeated — YOU WIN! 🎉');
+      return;
+    } else {
+      // Move to next enemy
       G.enemy = G.castle.pop();
-      G.damageOnEnemy=0; G.spadeShield=0;
+      G.damageOnEnemy = 0;
+      G.spadeShield = 0;
       addLog(`Next enemy: ${G.enemy.rank}${suitSymbol(G.enemy.suit)}.`);
-      renderAll(); return;
+      renderAll();
+      return;
     }
   }
 
+  // Enemy survives → attack
   enemyAttack();
   renderAll();
 }
+
 
 // Show discard modal
 function showDiscardModal(attackValue){
@@ -373,10 +405,19 @@ function showDiscardModal(attackValue){
       return;
     }
 
-    checked.sort((a,b)=>b-a).forEach(i=>G.discard.unshift(G.hand.splice(i,1)[0]));
-    addLog(`Discarded ${checked.map(i=>G.hand[i]?.rank+suitSymbol(G.hand[i]?.suit)).join(', ')} to satisfy ${attackValue} damage (total ${total}).`);
-    document.body.removeChild(modal); discardModal=null;
+    // Save the actual cards being discarded before removing them
+    const discardedCards = checked.map(i => G.hand[i]);
+
+    // Remove cards from hand → discard
+    checked.sort((a,b)=>b-a).forEach(i => G.discard.unshift(G.hand.splice(i,1)[0]));
+
+    // Log the discarded cards correctly
+    addLog(`Discarded ${discardedCards.map(c => c.rank + suitSymbol(c.suit)).join(', ')} to satisfy ${attackValue} damage (total ${total}).`);
+
+    document.body.removeChild(modal); 
+    discardModal = null;
     renderAll();
+
   });
 
   const btnContainer=document.createElement('div'); btnContainer.style.display='flex'; btnContainer.style.justifyContent='flex-end';
