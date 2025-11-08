@@ -38,6 +38,7 @@ const G = {
   tavern: [],
   discard: [],
   hand: [],
+  inPlay: [],       // cards currently played but not discarded
   enemy: null,
   damageOnEnemy: 0,
   spadeShield: 0,
@@ -46,7 +47,8 @@ const G = {
   selectedIndices: new Set(),
   gameOver: false,
   phase: 'player-turn',
-  jokerPlayable: true
+  jokerPlayable: true,
+  jokerUsedLastTurn: false
 };
 
 // Track discard modal
@@ -73,6 +75,7 @@ function startSolo(){
   G.tavern = buildTavern();
   G.discard = [];
   G.hand = [];
+  G.inPlay = [];
   G.enemy = G.castle.pop();
   G.damageOnEnemy = 0;
   G.spadeShield = 0;
@@ -82,6 +85,7 @@ function startSolo(){
   G.gameOver = false;
   G.phase = 'player-turn';
   G.jokerPlayable = true;
+  G.jokerUsedLastTurn = false;
 
   for (let i = 0; i < MAX_HAND_SOLO; i++) {
     if (G.tavern.length) G.hand.push(G.tavern.shift());
@@ -92,6 +96,14 @@ function startSolo(){
   el.flipJokerBtn.disabled = false;
 
   addLog(`Game started. Facing ${G.enemy.rank}${suitSymbol(G.enemy.suit)}.`);
+  renderAll();
+}
+
+// Called when a full turn completes (player survived enemy attack)
+function startNextTurn(){
+  G.jokerPlayable = true;
+  G.jokerUsedLastTurn = false;
+  G.phase = 'player-turn';
   renderAll();
 }
 
@@ -143,8 +155,10 @@ function renderAll(){
 
   // Log
   el.log.innerHTML=G.log.map(l=>`<div class="mb-1">${l}</div>`).join('');
+
+  // Joker button
   el.flipJokerBtn.textContent=`Joker (${G.jokers} left)`;
-  el.flipJokerBtn.disabled=G.jokers<=0;
+  el.flipJokerBtn.disabled = G.jokers<=0 || G.gameOver || G.hand.length===0 || !G.jokerPlayable || G.jokerUsedLastTurn;
 }
 
 // Selection
@@ -160,7 +174,7 @@ function addLog(msg){
   if(G.log.length>200) G.log.length=200;
 }
 
-// End game handler
+// End game
 function endGame(message){
   if(discardModal){
     document.body.removeChild(discardModal);
@@ -176,13 +190,12 @@ function endGame(message){
   el.yieldBtn.disabled = true;
   el.flipJokerBtn.disabled = true;
 
-  // Overlay
   const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
+  overlay.style.position='fixed';
   overlay.style.top = 0;
   overlay.style.left = 0;
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
+  overlay.style.width='100%';
+  overlay.style.height='100%';
   overlay.style.background = 'rgba(29, 32, 33, 0.96)';
   overlay.style.display = 'flex';
   overlay.style.flexDirection = 'column';
@@ -245,120 +258,97 @@ function performPlay(cards, selectedIndices) {
   const enemy = G.enemy;
   if (!enemy) return;
 
-  let immunitySuit = enemy.suit; // Enemy immunity
+  let immunitySuit = enemy.suit;
   let damageThisPlay = 0;
   let heartsTotal = 0, diamondsTotal = 0, spadesTotal = 0;
 
-  // Calculate damage and suit effects
   for (const c of cards) {
-    const base = (c.rank === 'A') ? 1 : cardValue(c.rank);
+    const base = (c.rank==='A')?1:cardValue(c.rank);
     let dmg = base;
-
-    // Clubs double damage unless blocked by immunity
-    if (c.suit === 'clubs' && !(c.suit === immunitySuit)) dmg *= 2;
-
+    if(c.suit==='clubs' && c.suit!==immunitySuit) dmg*=2;
     damageThisPlay += dmg;
 
-    // Accumulate suit-specific effects if not blocked by immunity
-    if (c.suit !== immunitySuit) {
-      if (c.suit === 'hearts') heartsTotal += base;
-      if (c.suit === 'diamonds') diamondsTotal += base;
-      if (c.suit === 'spades') spadesTotal += base;
-    } else {
-      addLog(`Suit power of ${c.rank}${suitSymbol(c.suit)} blocked by enemy immunity.`);
-    }
+    if(c.suit!==immunitySuit){
+      if(c.suit==='hearts') heartsTotal+=base;
+      if(c.suit==='diamonds') diamondsTotal+=base;
+      if(c.suit==='spades') spadesTotal+=base;
+    } else addLog(`Suit power of ${c.rank}${suitSymbol(c.suit)} blocked by enemy immunity.`);
   }
 
-  // Remove played cards from hand → discard
-  const toRemove = Array.from(selectedIndices).sort((a, b) => b - a);
-  for (const idx of toRemove) {
-    G.discard.unshift(G.hand.splice(idx, 1)[0]);
-  }
+  const toRemove = Array.from(selectedIndices).sort((a,b)=>b-a);
+  const playedCards = [];
+  for(const idx of toRemove) playedCards.push(G.hand.splice(idx,1)[0]);
+  G.inPlay.push(...playedCards);
   G.selectedIndices.clear();
 
-  // Apply Hearts effect: return cards from discard to tavern
-  if (heartsTotal > 0) {
-    const d = shuffle(G.discard);
-    const take = d.splice(0, heartsTotal);
-    const newDiscard = [...G.discard];
-    for (const t of take) {
-      const idx = newDiscard.findIndex(x => x === t);
-      if (idx >= 0) newDiscard.splice(idx, 1);
-    }
-    G.discard = newDiscard;
+  // Hearts effect
+  if(heartsTotal>0 && G.discard.length>0){
+    const take = G.discard.splice(-heartsTotal);
     G.tavern.push(...take);
-    addLog(`Hearts: Returned ${take.length} card(s) beneath the Tavern.`);
+    addLog(`Hearts: Returned ${take.length} card(s) from discard to bottom of Tavern.`);
   }
 
-  // Apply Diamonds effect: draw cards
-  if (diamondsTotal > 0) {
-    let drawn = 0;
-    for (let i = 0; i < diamondsTotal; i++) {
-      if (G.hand.length >= MAX_HAND_SOLO) break;
-      if (G.tavern.length === 0) break;
+  // Diamonds effect
+  if(diamondsTotal>0){
+    let drawn=0;
+    for(let i=0;i<diamondsTotal;i++){
+      if(G.hand.length>=MAX_HAND_SOLO) break;
+      if(G.tavern.length===0) break;
       G.hand.push(G.tavern.shift());
       drawn++;
     }
     addLog(`Diamonds: Drew ${drawn} card(s).`);
   }
 
-  // Apply Spades effect: add shield
-  if (spadesTotal > 0) {
-    G.spadeShield += spadesTotal;
+  // Spades effect
+  if(spadesTotal>0){
+    G.spadeShield+=spadesTotal;
     addLog(`Spades: Added shield ${spadesTotal}. Total shield now ${G.spadeShield}.`);
   }
 
-  // Deal damage to enemy
   G.damageOnEnemy += damageThisPlay;
-  const stats = faceStats(enemy);
+  const stats=faceStats(enemy);
   addLog(`Dealt ${damageThisPlay} damage to enemy (${Math.min(G.damageOnEnemy, stats.health)}/${stats.health}).`);
 
-  // Check if enemy defeated
-  if (G.damageOnEnemy >= stats.health) {
-    if (G.damageOnEnemy === stats.health) {
-      // Perfect kill → enemy goes to top of tavern
+  // Enemy defeated
+  if(G.damageOnEnemy >= stats.health){
+    if(G.damageOnEnemy===stats.health){
       G.tavern.unshift(enemy);
-      addLog(`Perfect defeat! ${enemy.rank}${suitSymbol(enemy.suit)} added to the top of your Tavern.`);
+      addLog(`Perfect defeat! ${enemy.rank}${suitSymbol(enemy.suit)} added to top of Tavern.`);
     } else {
-      // Not perfect → enemy goes to discard
       G.discard.unshift(enemy);
       addLog(`${enemy.rank}${suitSymbol(enemy.suit)} defeated and sent to discard pile.`);
     }
 
-    if (G.castle.length === 0) {
+    // Move all inPlay to discard
+    if(G.inPlay.length>0) G.discard.unshift(...G.inPlay.splice(0));
+
+    if(G.castle.length===0){
       endGame('All Royals defeated — YOU WIN! 🎉');
       return;
     } else {
-      // Move to next enemy
       G.enemy = G.castle.pop();
-      G.damageOnEnemy = 0;
-      G.spadeShield = 0;
+      G.damageOnEnemy=0;
+      G.spadeShield=0;
       addLog(`Next enemy: ${G.enemy.rank}${suitSymbol(G.enemy.suit)}.`);
       renderAll();
       return;
     }
   }
 
-  // Enemy survives → attack
-  enemyAttack();
   renderAll();
+  enemyAttack();
 }
 
-
-// Show discard modal
-function showDiscardModal(attackValue){
+// Enemy attack modal
+function showDiscardModal(attackValue){ 
   if(G.gameOver || !G.enemy) return;
-
   if(discardModal){ document.body.removeChild(discardModal); discardModal=null; }
 
-  const modal = document.createElement('div');
-  discardModal = modal;
-  modal.style.position='fixed';
-  modal.style.top='0'; modal.style.left='0';
-  modal.style.width='100%'; modal.style.height='100%';
-  modal.style.background='rgba(29,32,33,0.85)';
-  modal.style.display='flex'; modal.style.alignItems='center'; modal.style.justifyContent='center';
-  modal.style.zIndex='9999';
+  const modal = document.createElement('div'); discardModal=modal;
+  modal.style.position='fixed'; modal.style.top='0'; modal.style.left='0';
+  modal.style.width='100%'; modal.style.height='100%'; modal.style.background='rgba(29,32,33,0.85)';
+  modal.style.display='flex'; modal.style.alignItems='center'; modal.style.justifyContent='center'; modal.style.zIndex='9999';
 
   const box=document.createElement('div');
   box.style.background='#282828'; box.style.color='#ebdbb2'; box.style.padding='20px';
@@ -405,19 +395,13 @@ function showDiscardModal(attackValue){
       return;
     }
 
-    // Save the actual cards being discarded before removing them
     const discardedCards = checked.map(i => G.hand[i]);
-
-    // Remove cards from hand → discard
     checked.sort((a,b)=>b-a).forEach(i => G.discard.unshift(G.hand.splice(i,1)[0]));
-
-    // Log the discarded cards correctly
     addLog(`Discarded ${discardedCards.map(c => c.rank + suitSymbol(c.suit)).join(', ')} to satisfy ${attackValue} damage (total ${total}).`);
 
-    document.body.removeChild(modal); 
-    discardModal = null;
+    document.body.removeChild(modal); discardModal=null;
     renderAll();
-
+    startNextTurn();
   });
 
   const btnContainer=document.createElement('div'); btnContainer.style.display='flex'; btnContainer.style.justifyContent='flex-end';
@@ -454,14 +438,15 @@ function forfeit(){ if(!G.gameOver) endGame('You forfeited the game.'); }
 // Flip Joker
 function flipJoker(){
   if(G.gameOver) return; 
-  if(G.jokers<=0){ addLog('No jokers left.'); return; }
-  if(G.hand.length===0){ addLog('Cannot flip a Joker with an empty hand!'); alert('Cannot flip a Joker with an empty hand!'); return; }
+  if(G.jokers <= 0){ addLog('No jokers left.'); return; }
+  if(G.hand.length === 0){ addLog('Cannot flip a Joker with empty hand.'); alert('Cannot flip a Joker with empty hand!'); return; }
   if(!G.jokerPlayable){ addLog('You already flipped a Joker this turn!'); alert('You already flipped a Joker this turn!'); return; }
+  if(G.jokerUsedLastTurn){ addLog('Cannot flip Jokers two turns in a row!'); alert('Cannot flip Jokers two turns in a row!'); return; }
 
   while(G.hand.length) G.discard.unshift(G.hand.pop());
   for(let i=0;i<MAX_HAND_SOLO;i++){ if(G.tavern.length===0) break; G.hand.push(G.tavern.shift()); }
-  G.jokers--; G.jokerPlayable=false;
 
+  G.jokers--; G.jokerPlayable=false; G.jokerUsedLastTurn=true;
   addLog(`🃏 Joker flipped: discarded hand and refilled to ${G.hand.length} cards. Jokers left: ${G.jokers}.`);
   renderAll();
 }
