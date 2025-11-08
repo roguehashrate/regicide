@@ -258,46 +258,58 @@ function performPlay(cards, selectedIndices) {
   const enemy = G.enemy;
   if (!enemy) return;
 
-  let immunitySuit = enemy.suit; // Enemy immunity
+  // Step 0: Log what is being played
+  addLog(`Playing cards: ${cards.map(c => c.rank + suitSymbol(c.suit)).join(', ')}.`);
+
   let baseTotal = 0;
   let hasClub = false;
-  let heartsCount = 0;
-  let diamondsCount = 0;
-  let spadesCount = 0;
 
-  // Step 1: Calculate base total and track suits for effects
+  // Step 1: Calculate base total and check for clubs
   for (const c of cards) {
-    let val = (c.rank === 'A') ? 1 : cardValue(c.rank);
+    let val = (c.rank === 'A') ? 1 : cardValue(c.rank); // Ace counts 1 for combo rules
     baseTotal += val;
     if (c.suit === 'clubs') hasClub = true;
-    if (c.suit === 'hearts') heartsCount += 1;
-    if (c.suit === 'diamonds') diamondsCount += 1;
-    if (c.suit === 'spades') spadesCount += 1;
   }
 
-  // Step 2: Apply club doubling to total damage/effects
-  if (hasClub && immunitySuit !== 'clubs') baseTotal *= 2;
+  // Step 2: Apply Clubs multiplier to total damage
+  let totalDamage = hasClub ? baseTotal * 2 : baseTotal;
+  addLog(`Total damage after clubs multiplier${hasClub ? ' (club present, doubled)' : ''}: ${totalDamage}.`);
 
-  // Step 3: Move played cards to inPlay
-  const toRemove = Array.from(selectedIndices).sort((a,b)=>b-a);
+  // Step 3: Apply suit powers
+  let heartsTotal = 0, diamondsTotal = 0, spadesTotal = 0;
+  const suitsPlayed = new Set(cards.map(c => c.suit));
+
+  for (const c of cards) {
+    // Aces contribute full totalDamage to suit effects
+    let effectValue = (c.rank === 'A') ? totalDamage : totalDamage;
+
+    if (c.suit === 'hearts') heartsTotal = effectValue;
+    if (c.suit === 'diamonds') diamondsTotal = effectValue;
+    if (c.suit === 'spades') spadesTotal = effectValue;
+  }
+
+  addLog(`Suit effects: Hearts=${heartsTotal}, Diamonds=${diamondsTotal}, Spades=${spadesTotal}.`);
+
+  // Step 4: Move played cards to inPlay
+  const toRemove = Array.from(selectedIndices).sort((a, b) => b - a);
   const playedCards = [];
   for (const idx of toRemove) {
-    playedCards.push(G.hand.splice(idx,1)[0]);
+    playedCards.push(G.hand.splice(idx, 1)[0]);
   }
   G.inPlay.push(...playedCards);
   G.selectedIndices.clear();
 
-  // Step 4: Apply Hearts effect (return cards from discard to bottom of Tavern)
-  if (heartsCount > 0 && G.discard.length > 0) {
-    const take = G.discard.splice(-baseTotal); // up to baseTotal cards
+  // Step 5: Apply Hearts effect (heal from discard)
+  if (heartsTotal > 0 && G.discard.length > 0) {
+    const take = G.discard.splice(-heartsTotal);
     G.tavern.push(...take);
     addLog(`Hearts: Returned ${take.length} card(s) from discard to bottom of Tavern.`);
   }
 
-  // Step 5: Apply Diamonds effect (draw cards up to hand limit)
-  if (diamondsCount > 0) {
+  // Step 6: Apply Diamonds effect (draw)
+  if (diamondsTotal > 0) {
     let drawn = 0;
-    for (let i = 0; i < baseTotal; i++) {
+    for (let i = 0; i < diamondsTotal; i++) {
       if (G.hand.length >= MAX_HAND_SOLO) break;
       if (G.tavern.length === 0) break;
       G.hand.push(G.tavern.shift());
@@ -306,20 +318,19 @@ function performPlay(cards, selectedIndices) {
     addLog(`Diamonds: Drew ${drawn} card(s).`);
   }
 
-  // Step 6: Apply Spades effect (add to shield)
-  if (spadesCount > 0) {
-    G.spadeShield += baseTotal;
-    addLog(`Spades: Added shield ${baseTotal}. Total shield now ${G.spadeShield}.`);
+  // Step 7: Apply Spades effect (shield)
+  if (spadesTotal > 0) {
+    G.spadeShield += spadesTotal;
+    addLog(`Spades: Added shield ${spadesTotal}. Total shield now ${G.spadeShield}.`);
   }
 
-  // Step 7: Deal damage to enemy
+  // Step 8: Deal damage
+  G.damageOnEnemy += totalDamage;
   const stats = faceStats(enemy);
-  G.damageOnEnemy += baseTotal;
-  addLog(`Dealt ${baseTotal} damage to enemy (${Math.min(G.damageOnEnemy, stats.health)}/${stats.health}).`);
+  addLog(`Dealt ${totalDamage} damage to enemy (${Math.min(G.damageOnEnemy, stats.health)}/${stats.health}).`);
 
-  // Step 8: Check for enemy defeat
+  // Step 9: Check enemy defeat
   if (G.damageOnEnemy >= stats.health) {
-    // Determine perfect kill
     if (G.damageOnEnemy === stats.health) {
       G.tavern.unshift(enemy);
       addLog(`Perfect defeat! ${enemy.rank}${suitSymbol(enemy.suit)} added to top of Tavern.`);
@@ -328,12 +339,11 @@ function performPlay(cards, selectedIndices) {
       addLog(`${enemy.rank}${suitSymbol(enemy.suit)} defeated and sent to discard pile.`);
     }
 
-    // Move all inPlay cards (including this turn) to discard
+    // Move inPlay cards to discard
     if (G.inPlay.length > 0) {
       G.discard.unshift(...G.inPlay.splice(0));
     }
 
-    // Next enemy or win
     if (G.castle.length === 0) {
       endGame('All Royals defeated — YOU WIN! 🎉');
       return;
@@ -347,10 +357,12 @@ function performPlay(cards, selectedIndices) {
     }
   }
 
-  // Step 9: Enemy survives → attack
+  // Step 10: Enemy survives → attack
   renderAll();
   enemyAttack();
 }
+
+
 
 
 // Enemy attack modal
