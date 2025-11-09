@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Regicide",
+  "version": "1.0.0",
+  "description": "A simple game of Regicide",
+  "icons": {
+    "48": "/assets/app.png",
+    "128": "/assets/app.png"
+  }
+}
