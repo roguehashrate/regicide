@@ -4,233 +4,209 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Regicide</title>
-  <link rel="icon" type="icon-x" href="/assets/favicon.ico" />
+  <link rel="icon" type="icon-x" href="/assets/favicon.ico"/>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya+SC&family=Cinzel:wght@700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-  /* ---------- Body & Typography ---------- */
-  body {
-    background: #282828;
-    color: #ebdbb2;
-    font-family: 'Alegreya SC', serif;
-  }
 
-  h1 {
-    color: #fabd2f;
-  }
-
-  /* ---------- Cards ---------- */
-  .card {
-    width: 72px;
-    height: 98px;
-    border-radius: 8px;
-    background: #3c3836;
-    color: #ebdbb2;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 6px;
-    cursor: pointer;
-    user-select: none;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    transition: transform .08s ease, box-shadow .08s ease;
-  }
-
-  .card.selected {
-    transform: translateY(-6px) scale(1.03);
-    box-shadow: 0 8px 20px rgba(250,189,47,0.5);
-    outline: 2px solid #fabd2f;
-  }
-
-  .card .rank,
-  .card .suit {
-    font-family: 'Cinzel', serif;
-  }
-
-  .card .rank {
-    font-weight: 700;
-    font-size: 18px;
-  }
-
-  .card .suit {
-    font-size: 22px;  /* Slightly bigger as you requested */
-    margin-top: 6px;
-  }
-
-  .suit.hearts,
-  .suit.diamonds {
-    color: #fb4934;
-  }
-
-  .suit.spades,
-  .suit.clubs {
-    color: #83a598;
-  }
-
-  /* ---------- Panels ---------- */
-  .panel {
-    background: #3c3836;
-    border: 1px solid #504945;
-    border-radius: 8px;
-    padding: 1rem;
-  }
-
-  .panel .title {
-    font-weight: 600;
-    color: #fabd2f;
-    margin-bottom: 0.5rem;
-  }
-
-  /* ---------- Hand Container ---------- */
-  .hand-container {
-    display: flex;
-    overflow-x: auto;
-    gap: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-
-  .hand-container .card {
-    flex-shrink: 0;
-  }
-
-  @media(min-width:768px) {
-    .hand-container {
-      display: grid;
-      grid-template-columns: repeat(8, 72px);
-      gap: 0.5rem;
-      overflow-x: visible;
+    /* Gruvbox Dark Theme */
+    body {
+      background-color: #282828;
+      color: #ebdbb2;
+      font-family: 'Alegreya SC', serif;
     }
-  }
+    h1 {
+      color: #fabd2f;
+    }
 
-  /* ---------- Buttons ---------- */
-  .btn {
-    padding: 0.3rem 0.8rem;
-    border-radius: 0.375rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.08s ease;
-  }
+    /* Card styles */
+    .card {
+      width: 72px;
+      height: 98px;
+      border-radius: 8px;
+      background: #3c3836;
+      color: #ebdbb2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 6px;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+      transition: transform .08s ease, box-shadow .08s ease;
+    }
+    .card.selected {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 8px 20px rgba(250,189,47,0.5);
+      outline: 2px solid #fabd2f;
+    }
 
-  .btn:hover {
-    transform: scale(1.05);
-  }
+    /* Softer drop shadow for card text */
+    .card .rank,
+    .card .suit {
+      font-family: 'Cinzel', serif;
+    }
 
-  .btn-play {
-    background: #fabd2f;
-    color: #282828;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
+    .card .rank { font-weight: 700; font-size: 18px; }
+    .card .suit { font-size: 16px; margin-top: 6px; }
+    .suit.hearts, .suit.diamonds { color: #fb4934; }
+    .suit.spades, .suit.clubs { color: #83a598; }
 
-  .btn-forfeit {
-    background: #504945;
-    color: #ebdbb2;
-  }
 
-  .btn-joker {
-    background: #b8bb26;
-    color: #282828;
-  }
+    /* Panels */
+    .panel {
+      background: #3c3836;
+      border: 1px solid #504945;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .panel .title {
+      font-weight: 600;
+      color: #fabd2f;
+      margin-bottom: 0.5rem;
+    }
 
-  /* ---------- Enemy Card ---------- */
-  .enemy-card {
-    background: #504945;
-    border: 1px solid #665c54;
-    border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-  }
+    /* Hand container */
+    .hand-container {
+      display: flex;
+      overflow-x: auto;
+      gap: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    .hand-container .card { flex-shrink:0; }
 
-  .enemy-card .stat {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    font-weight: 600;
-    font-size: 1rem;
-  }
+    /* Buttons */
+    .btn {
+      padding: 0.3rem 0.8rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.08s ease;
+    }
+    .btn:hover { transform: scale(1.05); }
 
-  .enemy-card .stat span {
-    font-weight: 700;
-    color: #fabd2f;
-  }
+    .btn-play { background-color: #fabd2f; color: #282828; }
+    .btn-forfeit { background-color: #504945; color: #ebdbb2; }
+    .btn-joker { background-color: #b8bb26; color: #282828; }
 
-  /* ---------- Game Log ---------- */
-  .game-log {
-    background: #3c3836;
-    border: 1px solid #504945;
-    border-radius: 8px;
-    padding: 1rem;
-    max-height: 12rem;
-    overflow-y: auto;
-    font-size: 0.85rem;
-    color: #ebdbb2;
-  }
+    /* Enemy card */
+    .enemy-card {
+      background: #504945;
+      border: 1px solid #665c54;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .enemy-card .stat {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .enemy-card .stat span { font-weight: 700; color: #fabd2f; }
 
-  .muted {
-    color: #bdae93;
-    font-size: 0.8rem;
-  }
+    /* Game log */
+    .game-log {
+      background: #3c3836;
+      border: 1px solid #504945;
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 12rem;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      color: #ebdbb2;
+    }
 
-  /* ---------- Stats Panel ---------- */
-  .stats-panel {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    margin-bottom: 1rem;
-  }
+    .muted { color: #bdae93; font-size: 0.8rem; }
 
-  .stat-box {
-    flex: 1;
-    text-align: center;
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: 1px solid #504945;
-    background: #3c3836;
-  }
+    /* Modal */
+    .modal-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(40, 40, 40, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
 
-  .stat-box .title {
-    color: #fabd2f;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
+    .modal-box {
+      background-color: #282828;
+      color: #ebdbb2;
+      padding: 20px;
+      border-radius: 8px;
+      max-height: 80%;
+      overflow-y: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    }
 
-  /* ---------- Nostr Connect Button ---------- */
-  #nostr-connect-btn {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-  }
+    .modal-box button {
+      background-color: #458588;
+      color: #fbf1c7;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
 
-  #nostr-status {
-    position: absolute;
-    top: 1rem;
-    left: 6rem;
-  }
-</style>
+    .modal-box button:hover {
+      background-color: #83a598;
+    }
 
+    /* Stats boxes container (desktop & mobile) */
+    .stats-panel {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .stat-box {
+      flex: 1;
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: 1px solid #504945;
+      background: #3c3836;
+    }
+    .stat-box .title {
+      color: #fabd2f;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Layout adjustments */
+    @media(min-width:768px){
+      .hand-container { display: grid; grid-template-columns: repeat(8, 72px); gap:0.5rem; overflow-x: visible; }
+    }
+  </style>
 </head>
 <body>
   <div class="max-w-5xl mx-auto p-4 relative">
     <h1 class="text-3xl mb-4 text-center">Regicide</h1>
-    <a href="rules.html"
-      class="absolute top-4 right-4 text-sm text-yellow-400 hover:text-yellow-300 font-semibold">Rules</a>
-
-    <!-- Nostr Connect -->
-    <button id="nostr-connect-btn" class="btn btn-play">
-      <img src="/assets/nostr-logo.png" alt="Nostr logo" class="w-5 h-5">
-      Connect with Nostr
-    </button>
+    <a href="rules.html" class="absolute top-4 right-4 text-sm text-yellow-400 hover:text-yellow-300 font-semibold">Rules</a>
 
     <div id="enemy-card" class="enemy-card mb-4"></div>
 
+    <!-- Stats panel (Castle / Tavern / Discard) -->
     <div class="stats-panel">
-      <div class="stat-box"><div class="title">Castle</div><div id="castle-count" class="text-lg font-semibold">--</div></div>
-      <div class="stat-box"><div class="title">Tavern</div><div id="tavern-count" class="text-lg font-semibold">--</div></div>
-      <div class="stat-box"><div class="title">Discarded</div><div id="discard-count" class="text-lg font-semibold">--</div></div>
+      <div class="stat-box">
+        <div class="title">Castle</div>
+        <div id="castle-count" class="text-lg font-semibold">--</div>
+      </div>
+      <div class="stat-box">
+        <div class="title">Tavern</div>
+        <div id="tavern-count" class="text-lg font-semibold">--</div>
+      </div>
+      <div class="stat-box">
+        <div class="title">Discarded</div>
+        <div id="discard-count" class="text-lg font-semibold">--</div>
+      </div>
     </div>
 
     <div class="panel mb-4">
@@ -253,25 +229,6 @@
     <button id="clear-log" class="muted text-sm mb-2">Clear Log</button>
   </div>
 
-  <script type="module">
-    import { connectNostr, postGameResult } from './nostr.js';
-    import './regicide.js';
-
-    let nostrModule = null;
-    let nostrKey = null;
-
-    document.getElementById("nostr-connect-btn").addEventListener("click", async () => {
-      const res = await connectNostr();
-      if (res) {
-        nostrModule = res.nostr;
-        nostrKey = res.key;
-        document.getElementById("nostr-status").textContent = `Connected as ${res.nostr.getPublicKey(res.key).slice(0,8)}`;
-      }
-    });
-
-    // Example: when game ends, you can call
-    // postGameResult({victory: 'gold'}, nostrModule, nostrKey);
-  </script>
+  <script src="regicide.js"></script>
 </body>
 </html>
-
