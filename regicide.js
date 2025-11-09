@@ -254,72 +254,90 @@ function playSelected(){
   addLog('Invalid selection.');
 }
 
-// Perform play
+// Perform play (replace existing performPlay)
 function performPlay(cards, selectedIndices) {
   const enemy = G.enemy;
   if (!enemy) return;
 
-  // Royal immunity
-  const immunitySuit = ['J','Q','K'].includes(enemy.rank) ? enemy.suit : null;
-
+  const enemySuit = enemy.suit; // the suit that can nullify effects
+  // 1) Compute base total (A = 1, face values as defined)
   let baseTotal = 0;
-  let hasClub = false;
-
   for (const c of cards) {
-    let val = (c.rank === 'A') ? 1 : cardValue(c.rank);
-    baseTotal += val;
-    if (c.suit === 'clubs') hasClub = true;
+    baseTotal += (c.rank === 'A') ? 1 : cardValue(c.rank);
   }
 
-  const totalDamage = hasClub ? baseTotal*2 : baseTotal;
+  // 2) Determine if any Clubs are present (clubs double) — but only if enemy is NOT a club
+  const clubPresent = cards.some(c => c.suit === 'clubs');
+  const clubsEffective = clubPresent && (enemySuit !== 'clubs');
 
-  // Step 3: Apply suit powers based on total damage and enemy suit immunity
-  let heartsTotal = 0, diamondsTotal = 0, spadesTotal = 0;
-  const enemySuit = enemy.suit;
-  
+  // 3) Final total damage: double base if clubs are effective
+  const totalDamage = clubsEffective ? baseTotal * 2 : baseTotal;
+
+  // 4) Determine which suit effects apply (use totalDamage for each effect,
+  //    but skip a suit completely if enemy has that suit)
+  let heartsEffect = 0, diamondsEffect = 0, spadesEffect = 0;
   for (const c of cards) {
-    if (c.suit === 'hearts' && enemySuit !== 'hearts') heartsTotal = totalDamage;
-    if (c.suit === 'diamonds' && enemySuit !== 'diamonds') diamondsTotal = totalDamage;
-    if (c.suit === 'spades' && enemySuit !== 'spades') spadesTotal = totalDamage;
+    if (c.suit === 'hearts' && enemySuit !== 'hearts') heartsEffect = totalDamage;
+    if (c.suit === 'diamonds' && enemySuit !== 'diamonds') diamondsEffect = totalDamage;
+    if (c.suit === 'spades' && enemySuit !== 'spades') spadesEffect = totalDamage;
+    // note: if multiple cards of same suit are present we still use the same totalDamage
+    // because rules state the total attack value is used for suit effects
   }
 
-
-  const toRemove = Array.from(selectedIndices).sort((a,b)=>b-a);
+  // 5) Move played cards to inPlay (they don't go to discard until enemy dies)
+  const toRemove = Array.from(selectedIndices).sort((a, b) => b - a);
   const playedCards = [];
   for (const idx of toRemove) {
-    playedCards.push(G.hand.splice(idx,1)[0]);
+    playedCards.push(G.hand.splice(idx, 1)[0]);
   }
   G.inPlay.push(...playedCards);
   G.selectedIndices.clear();
 
-  if(heartsTotal>0 && G.discard.length>0){
-    const take = G.discard.splice(-heartsTotal);
-    G.tavern.push(...take);
-    addLog(`Hearts: Returned ${take.length} card(s) from discard to bottom of Tavern.`);
+  // 6) Log what was played (cards, total, suits, club doubling info)
+  const playedText = playedCards.map(c => `${c.rank}${suitSymbol(c.suit)}`).join(', ');
+  const clubNote = clubPresent ? (clubsEffective ? ' (Clubs doubled total)' : ' (Clubs blocked by enemy immunity)') : '';
+  addLog(`Played: ${playedText} — Total attack value: ${baseTotal}${clubPresent ? ' → ' + totalDamage : ''}${clubNote}`);
+
+  // 7) Apply Hearts: return up to heartsEffect cards from discard to bottom of Tavern
+  if (heartsEffect > 0) {
+    if (G.discard.length > 0) {
+      const takeCount = Math.min(heartsEffect, G.discard.length);
+      // take from top of discard (end of array) to preserve discard ordering
+      const take = G.discard.splice(-takeCount, takeCount);
+      G.tavern.push(...take);
+      addLog(`Hearts: Returned ${take.length} card(s) from discard to bottom of Tavern.`);
+    } else {
+      addLog('Hearts: No cards in discard to return.');
+    }
   }
 
-  if(diamondsTotal>0){
-    let drawn=0;
-    for(let i=0;i<diamondsTotal;i++){
-      if(G.hand.length>=MAX_HAND_SOLO) break;
-      if(G.tavern.length===0) break;
+  // 8) Apply Diamonds: draw up to diamondsEffect cards (respecting MAX_HAND_SOLO)
+  if (diamondsEffect > 0) {
+    let drawn = 0;
+    for (let i = 0; i < diamondsEffect; i++) {
+      if (G.hand.length >= MAX_HAND_SOLO) break;
+      if (G.tavern.length === 0) break;
       G.hand.push(G.tavern.shift());
       drawn++;
     }
     addLog(`Diamonds: Drew ${drawn} card(s).`);
   }
 
-  if(spadesTotal>0){
-    G.spadeShield+=spadesTotal;
-    addLog(`Spades: Added shield ${spadesTotal}. Total shield now ${G.spadeShield}.`);
+  // 9) Apply Spades: add shield equal to spadesEffect
+  if (spadesEffect > 0) {
+    G.spadeShield += spadesEffect;
+    addLog(`Spades: Added shield ${spadesEffect}. Total shield now ${G.spadeShield}.`);
   }
 
+  // 10) Deal damage to enemy and log
   G.damageOnEnemy += totalDamage;
   const stats = faceStats(enemy);
   addLog(`Dealt ${totalDamage} damage to enemy (${Math.min(G.damageOnEnemy, stats.health)}/${stats.health}).`);
 
-  if(G.damageOnEnemy>=stats.health){
-    if(G.damageOnEnemy===stats.health){
+  // 11) Check defeat
+  if (G.damageOnEnemy >= stats.health) {
+    // perfect?
+    if (G.damageOnEnemy === stats.health) {
       G.tavern.unshift(enemy);
       addLog(`Perfect defeat! ${enemy.rank}${suitSymbol(enemy.suit)} added to top of Tavern.`);
     } else {
@@ -327,11 +345,14 @@ function performPlay(cards, selectedIndices) {
       addLog(`${enemy.rank}${suitSymbol(enemy.suit)} defeated and sent to discard pile.`);
     }
 
-    if(G.inPlay.length>0){
+    // After enemy dies, move all inPlay cards (including those just played) to discard
+    if (G.inPlay.length > 0) {
+      // keep same order — put entire inPlay array on top of discard
       G.discard.unshift(...G.inPlay.splice(0));
     }
 
-    if(G.castle.length===0){
+    // Next enemy or win
+    if (G.castle.length === 0) {
       endGame('All Royals defeated — YOU WIN! 🎉');
       return;
     } else {
@@ -344,9 +365,11 @@ function performPlay(cards, selectedIndices) {
     }
   }
 
+  // 12) Enemy survives → proceed to enemy attack
   renderAll();
   enemyAttack();
 }
+
 
 // Enemy attack modal - cards shown large
 function showDiscardModal(attackValue){

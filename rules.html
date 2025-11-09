@@ -3,18 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Regicide Rules</title>
+<title>Regicide - Rules</title>
 <link rel="icon" type="icon-x" href="/assets/favicon.ico"/>
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Alegreya+SC&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+
 <style>
   /* Gruvbox Dark Theme */
   body {
     background-color: #282828;
     color: #ebdbb2;
-    font-family: 'Courier New', monospace;
+    font-family: 'Alegreya SC', serif;
     margin: 0;
     padding: 0;
-    line-height: 1.6;
+    line-height: 1.7;
   }
 
   header {
@@ -26,16 +29,22 @@
 
   h1, h2, h3 {
     color: #fabd2f;
-    margin-top: 1.5rem;
+    font-family: 'Cinzel', serif;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
   }
 
   main {
     max-width: 900px;
     margin: 2rem auto;
-    padding: 2rem;
+    padding: 2.5rem;
     background: #3c3836;
     border: 1px solid #504945;
     border-radius: 12px;
+  }
+
+  p {
+    margin-bottom: 1rem;
   }
 
   ul, ol {
@@ -43,7 +52,7 @@
   }
 
   li {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
   }
 
   strong {
@@ -65,72 +74,105 @@
     border-radius: 0.375rem;
     text-decoration: none;
     transition: transform 0.08s ease;
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
   }
 
   a.btn:hover {
     transform: scale(1.05);
     background-color: #fe8019;
   }
+
+  /* Highlight card suits */
+  .hearts { color: #fb4934; }
+  .diamonds { color: #fb4934; }
+  .spades { color: #83a598; }
+  .clubs { color: #83a598; }
+
+  /* Extra spacing for sections */
+  section {
+    margin-bottom: 2rem;
+  }
+
+  section:last-of-type {
+    margin-bottom: 1rem;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>How to Play</h1>
+  <h1>Regicide - Rules</h1>
 </header>
 
 <main>
   <a href="index.html" class="btn">Back to Game</a>
 
-  <h2>Objective</h2>
-  <p>Defeat all 12 powerful enemies using your hand of cards. Win by defeating the last King. If you cannot discard enough cards to survive an enemy attack, you lose.</p>
+  <section>
+    <h2>Objective</h2>
+    <p>Defeat all 12 powerful enemies using your hand of cards. Win by defeating the last King. If you cannot discard enough cards to survive an enemy attack, you lose.</p>
+  </section>
 
-  <h2>Setup</h2>
-  <ul>
-    <li>Castle deck: Shuffle 4 Kings, 4 Queens, 4 Jacks (Kings on bottom, then Queens, then Jacks on top).</li>
-    <li>Tavern deck: Shuffle cards 2–10 with 4 Animal Companions and 2 Jesters.</li>
-    <li>Draw 8 cards into your hand.</li>
-    <li>Reveal the top Castle card as the first enemy.</li>
-  </ul>
+  <section>
+    <h2>Setup</h2>
+    <ul>
+      <li>Castle deck: Shuffle 4 Kings, 4 Queens, 4 Jacks (Kings on bottom, then Queens, then Jacks on top).</li>
+      <li>Tavern deck: Shuffle cards 2–10 with 4 Animal Companions and 2 Jesters.</li>
+      <li>Draw 8 cards into your hand.</li>
+      <li>Reveal the top Castle card as the first enemy.</li>
+    </ul>
+  </section>
 
-  <h2>Game Turn</h2>
-  <ol>
-    <li><strong>Step 1 - Play a card:</strong> Play one or more cards from your hand to attack the enemy.</li>
-    <li><strong>Step 2 - Resolve suit powers:</strong> Apply effects based on card suits.</li>
-    <li><strong>Step 3 - Deal damage:</strong> Apply damage to the enemy and check if defeated.</li>
-    <li><strong>Step 4 - Enemy attacks:</strong> Discard cards to survive enemy damage.</li>
-  </ol>
+  <section>
+    <h2>Game Turn</h2>
+    <ol>
+      <li><strong>Step 1 - Play a card:</strong> Play one or more cards from your hand to attack the enemy.</li>
+      <li><strong>Step 2 - Resolve suit powers:</strong> Apply effects based on card suits. Royal cards are immune to their own suit when attacked.</li>
+      <li><strong>Step 3 - Deal damage:</strong> Apply damage to the enemy and check if defeated.</li>
+      <li><strong>Step 4 - Enemy attacks:</strong> Discard cards to survive enemy damage. Clubs, Hearts, Spades, or Diamonds on enemies do not affect enemies of the same suit (immunity applies).</li>
+    </ol>
+  </section>
 
-  <h2>Card Suits</h2>
-  <ul>
-    <li><strong>Clubs:</strong> Double damage. Example: 8 of Clubs deals 16 damage.</li>
-    <li><strong>Spades:</strong> Shields against enemy attacks. Effects accumulate until enemy is defeated.</li>
-    <li><strong>Hearts:</strong> Heal from discard. Shuffle discard, place cards equal to attack value beneath Tavern deck.</li>
-    <li><strong>Diamonds:</strong> Draw cards equal to attack value (up to max hand size).</li>
-  </ul>
+  <section>
+    <h2>Card Suits</h2>
+    <ul>
+      <li><strong class="clubs">Clubs:</strong> Double damage. Example: 8 of Clubs deals 16 damage.</li>
+      <li><strong class="spades">Spades:</strong> Shields against enemy attacks. Effects accumulate until enemy is defeated.</li>
+      <li><strong class="hearts">Hearts:</strong> Heal from discard. Shuffle discard, place cards equal to attack value beneath Tavern deck.</li>
+      <li><strong class="diamonds">Diamonds:</strong> Draw cards equal to attack value (up to max hand size).</li>
+    </ul>
+  </section>
 
-  <h2>Animal Companions</h2>
-  <p>Aces count as 1 attack and can be paired with one other card. Suit powers apply as normal.</p>
+  <section>
+    <h2>Animal Companions</h2>
+    <p>Aces count as 1 attack and can be paired with one other card. Suit powers apply as normal.</p>
+  </section>
 
-  <h2>Jester / Joker</h2>
-  <ul>
-    <li>Attack value: 0</li>
-    <li>Flip Jesters (max 2 per game) to discard your hand and refill to 8 cards. This does not count as drawing for Diamonds immunity.</li>
-  </ul>
+  <section>
+    <h2>Jester / Joker</h2>
+    <ul>
+      <li>Attack value: 0</li>
+      <li>Flip Jesters (max 2 per game) to discard your hand and refill to 8 cards. This does not count as drawing for Diamonds immunity.</li>
+    </ul>
+  </section>
 
-  <h2>Perfect Kill</h2>
-  <p>If total damage equals exactly the enemy's remaining health, the enemy is placed on top of the Tavern deck. Otherwise, it goes to the discard pile.</p>
+  <section>
+    <h2>Perfect Kill</h2>
+    <p>If total damage equals exactly the enemy's remaining health, the enemy is placed on top of the Tavern deck. Otherwise, it goes to the discard pile.</p>
+  </section>
 
-  <h2>Combos</h2>
-  <p>You can play sets of 2–4 cards of the same number as long as their total value ≤ 10. Animal Companions can only be paired with one other card. Suit powers resolve at total attack value.</p>
+  <section>
+    <h2>Combos</h2>
+    <p>You can play sets of 2–4 cards of the same number as long as their total value ≤ 10. Animal Companions can only be paired with one other card. Suit powers resolve at total attack value.</p>
+  </section>
 
-  <h2>Winning & Losing</h2>
-  <ul>
-    <li>Win by defeating all Royals.</li>
-    <li>Lose if unable to discard enough cards to survive an enemy attack.</li>
-    <li>Victory ranking based on Jester usage: 0 jokers = Gold, 1 joker = Silver, 2 jokers = Bronze.</li>
-  </ul>
+  <section>
+    <h2>Winning & Losing</h2>
+    <ul>
+      <li>Win by defeating all Royals.</li>
+      <li>Lose if unable to discard enough cards to survive an enemy attack.</li>
+      <li>Victory ranking based on Jester usage: 0 jokers = Gold, 1 joker = Silver, 2 jokers = Bronze.</li>
+    </ul>
+  </section>
 
 </main>
 

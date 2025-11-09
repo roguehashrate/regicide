@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Regicide</title>
   <link rel="icon" type="icon-x" href="/assets/favicon.ico"/>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya+SC&family=Cinzel:wght@700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+
     /* Gruvbox Dark Theme */
     body {
       background-color: #282828;
       color: #ebdbb2;
-      font-family: 'Courier New', monospace;
+      font-family: 'Alegreya SC', serif;
     }
     h1 {
       color: #fabd2f;
@@ -39,10 +41,18 @@
       box-shadow: 0 8px 20px rgba(250,189,47,0.5);
       outline: 2px solid #fabd2f;
     }
+
+    /* Softer drop shadow for card text */
+    .card .rank,
+    .card .suit {
+      font-family: 'Cinzel', serif;
+    }
+
     .card .rank { font-weight: 700; font-size: 18px; }
     .card .suit { font-size: 16px; margin-top: 6px; }
     .suit.hearts, .suit.diamonds { color: #fb4934; }
     .suit.spades, .suit.clubs { color: #83a598; }
+
 
     /* Panels */
     .panel {
@@ -53,7 +63,7 @@
     }
     .panel .title {
       font-weight: 600;
-      color: #fabd2f; /* Ensure yellow for panel titles */
+      color: #fabd2f;
       margin-bottom: 0.5rem;
     }
 
@@ -165,7 +175,7 @@
       background: #3c3836;
     }
     .stat-box .title {
-      color: #fabd2f; /* Ensure yellow for Castle/Tavern/Discarded titles */
+      color: #fabd2f;
       font-weight: 600;
       margin-bottom: 0.5rem;
     }
@@ -222,4 +232,3 @@
   <script src="regicide.js"></script>
 </body>
 </html>
-
