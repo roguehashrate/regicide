@@ -38,7 +38,7 @@ const G = {
   tavern: [],
   discard: [],
   hand: [],
-  inPlay: [],       // cards currently played but not discarded
+  inPlay: [],       
   enemy: null,
   damageOnEnemy: 0,
   spadeShield: 0,
@@ -93,13 +93,14 @@ function startSolo(){
 
   el.playBtn.disabled = false;
   el.yieldBtn.disabled = false;
-  el.flipJokerBtn.disabled = false;
+  el.flipJokerBtn.disabled = G.jokers<=0 || G.gameOver || G.hand.length===0 || !G.jokerPlayable || G.jokerUsedLastTurn;
+
 
   addLog(`Game started. Facing ${G.enemy.rank}${suitSymbol(G.enemy.suit)}.`);
   renderAll();
 }
 
-// Called when a full turn completes (player survived enemy attack)
+// Called when a full turn completes
 function startNextTurn(){
   G.jokerPlayable = true;
   G.jokerUsedLastTurn = false;
@@ -258,80 +259,67 @@ function performPlay(cards, selectedIndices) {
   const enemy = G.enemy;
   if (!enemy) return;
 
-  // Step 0: Log what is being played
-  addLog(`Playing cards: ${cards.map(c => c.rank + suitSymbol(c.suit)).join(', ')}.`);
+  // Royal immunity
+  const immunitySuit = ['J','Q','K'].includes(enemy.rank) ? enemy.suit : null;
 
   let baseTotal = 0;
   let hasClub = false;
 
-  // Step 1: Calculate base total and check for clubs
   for (const c of cards) {
-    let val = (c.rank === 'A') ? 1 : cardValue(c.rank); // Ace counts 1 for combo rules
+    let val = (c.rank === 'A') ? 1 : cardValue(c.rank);
     baseTotal += val;
     if (c.suit === 'clubs') hasClub = true;
   }
 
-  // Step 2: Apply Clubs multiplier to total damage
-  let totalDamage = hasClub ? baseTotal * 2 : baseTotal;
-  addLog(`Total damage after clubs multiplier${hasClub ? ' (club present, doubled)' : ''}: ${totalDamage}.`);
+  const totalDamage = hasClub ? baseTotal*2 : baseTotal;
 
-  // Step 3: Apply suit powers
+  // Step 3: Apply suit powers based on total damage and enemy suit immunity
   let heartsTotal = 0, diamondsTotal = 0, spadesTotal = 0;
-  const suitsPlayed = new Set(cards.map(c => c.suit));
-
+  const enemySuit = enemy.suit;
+  
   for (const c of cards) {
-    // Aces contribute full totalDamage to suit effects
-    let effectValue = (c.rank === 'A') ? totalDamage : totalDamage;
-
-    if (c.suit === 'hearts') heartsTotal = effectValue;
-    if (c.suit === 'diamonds') diamondsTotal = effectValue;
-    if (c.suit === 'spades') spadesTotal = effectValue;
+    if (c.suit === 'hearts' && enemySuit !== 'hearts') heartsTotal = totalDamage;
+    if (c.suit === 'diamonds' && enemySuit !== 'diamonds') diamondsTotal = totalDamage;
+    if (c.suit === 'spades' && enemySuit !== 'spades') spadesTotal = totalDamage;
   }
 
-  addLog(`Suit effects: Hearts=${heartsTotal}, Diamonds=${diamondsTotal}, Spades=${spadesTotal}.`);
 
-  // Step 4: Move played cards to inPlay
-  const toRemove = Array.from(selectedIndices).sort((a, b) => b - a);
+  const toRemove = Array.from(selectedIndices).sort((a,b)=>b-a);
   const playedCards = [];
   for (const idx of toRemove) {
-    playedCards.push(G.hand.splice(idx, 1)[0]);
+    playedCards.push(G.hand.splice(idx,1)[0]);
   }
   G.inPlay.push(...playedCards);
   G.selectedIndices.clear();
 
-  // Step 5: Apply Hearts effect (heal from discard)
-  if (heartsTotal > 0 && G.discard.length > 0) {
+  if(heartsTotal>0 && G.discard.length>0){
     const take = G.discard.splice(-heartsTotal);
     G.tavern.push(...take);
     addLog(`Hearts: Returned ${take.length} card(s) from discard to bottom of Tavern.`);
   }
 
-  // Step 6: Apply Diamonds effect (draw)
-  if (diamondsTotal > 0) {
-    let drawn = 0;
-    for (let i = 0; i < diamondsTotal; i++) {
-      if (G.hand.length >= MAX_HAND_SOLO) break;
-      if (G.tavern.length === 0) break;
+  if(diamondsTotal>0){
+    let drawn=0;
+    for(let i=0;i<diamondsTotal;i++){
+      if(G.hand.length>=MAX_HAND_SOLO) break;
+      if(G.tavern.length===0) break;
       G.hand.push(G.tavern.shift());
       drawn++;
     }
     addLog(`Diamonds: Drew ${drawn} card(s).`);
   }
 
-  // Step 7: Apply Spades effect (shield)
-  if (spadesTotal > 0) {
-    G.spadeShield += spadesTotal;
+  if(spadesTotal>0){
+    G.spadeShield+=spadesTotal;
     addLog(`Spades: Added shield ${spadesTotal}. Total shield now ${G.spadeShield}.`);
   }
 
-  // Step 8: Deal damage
   G.damageOnEnemy += totalDamage;
   const stats = faceStats(enemy);
   addLog(`Dealt ${totalDamage} damage to enemy (${Math.min(G.damageOnEnemy, stats.health)}/${stats.health}).`);
 
-  // Step 9: Check enemy defeat
-  if (G.damageOnEnemy >= stats.health) {
-    if (G.damageOnEnemy === stats.health) {
+  if(G.damageOnEnemy>=stats.health){
+    if(G.damageOnEnemy===stats.health){
       G.tavern.unshift(enemy);
       addLog(`Perfect defeat! ${enemy.rank}${suitSymbol(enemy.suit)} added to top of Tavern.`);
     } else {
@@ -339,12 +327,11 @@ function performPlay(cards, selectedIndices) {
       addLog(`${enemy.rank}${suitSymbol(enemy.suit)} defeated and sent to discard pile.`);
     }
 
-    // Move inPlay cards to discard
-    if (G.inPlay.length > 0) {
+    if(G.inPlay.length>0){
       G.discard.unshift(...G.inPlay.splice(0));
     }
 
-    if (G.castle.length === 0) {
+    if(G.castle.length===0){
       endGame('All Royals defeated — YOU WIN! 🎉');
       return;
     } else {
@@ -357,108 +344,155 @@ function performPlay(cards, selectedIndices) {
     }
   }
 
-  // Step 10: Enemy survives → attack
   renderAll();
   enemyAttack();
 }
 
-
-
-
-// Enemy attack modal
-function showDiscardModal(attackValue){ 
+// Enemy attack modal - cards shown large
+function showDiscardModal(attackValue){
   if(G.gameOver || !G.enemy) return;
   if(discardModal){ document.body.removeChild(discardModal); discardModal=null; }
 
   const modal = document.createElement('div'); discardModal=modal;
-  modal.style.position='fixed'; modal.style.top='0'; modal.style.left='0';
-  modal.style.width='100%'; modal.style.height='100%'; modal.style.background='rgba(29,32,33,0.85)';
-  modal.style.display='flex'; modal.style.alignItems='center'; modal.style.justifyContent='center'; modal.style.zIndex='9999';
+  modal.style.position='fixed';
+  modal.style.top='0';
+  modal.style.left='0';
+  modal.style.width='100%';
+  modal.style.height='100%';
+  modal.style.background='rgba(29,32,33,0.85)';
+  modal.style.display='flex';
+  modal.style.alignItems='center';
+  modal.style.justifyContent='center';
+  modal.style.zIndex='9999';
+  modal.style.overflow='auto';
 
   const box=document.createElement('div');
-  box.style.background='#282828'; box.style.color='#ebdbb2'; box.style.padding='20px';
-  box.style.borderRadius='12px'; box.style.maxHeight='80%'; box.style.width='90%'; box.style.maxWidth='500px';
-  box.style.overflowY='auto'; box.style.display='flex'; box.style.flexDirection='column'; box.style.gap='12px';
+  box.style.background='#282828';
+  box.style.color='#ebdbb2';
+  box.style.padding='20px';
+  box.style.borderRadius='12px';
+  box.style.maxHeight='90%';
+  box.style.width='90%';
+  box.style.maxWidth='700px';
+  box.style.display='flex';
+  box.style.flexDirection='column';
+  box.style.gap='12px';
 
   const header=document.createElement('div');
-  header.innerHTML=`<h3 style="font-size:1.2rem; font-weight:700; margin-bottom:4px;">Enemy attacks ${attackValue}</h3>
-                      <p>Required total: <strong>${attackValue}</strong></p>
-                      <p>Selected total: <strong id="selected-total">0</strong></p>
-                      <p>Selected cards: <span id="selected-list">None</span></p>`;
+  header.innerHTML=`<h3 style="font-size:1.5rem; font-weight:700; margin-bottom:8px;">Enemy attacks ${attackValue}</h3>
+                      <p style="margin-bottom:4px;">Select cards to discard to survive. Total required: <strong>${attackValue}</strong></p>`;
   box.appendChild(header);
 
-  const form=document.createElement('div'); form.style.display='flex'; form.style.flexDirection='column'; form.style.gap='6px';
+  const form=document.createElement('div'); form.style.display='flex'; form.style.flexWrap='wrap'; form.style.gap='12px';
+
   G.hand.forEach((c, idx)=>{
-    const label=document.createElement('label'); label.style.display='flex'; label.style.justifyContent='space-between';
-    label.style.background='#3c3836'; label.style.padding='6px 10px'; label.style.borderRadius='6px'; label.style.cursor='default';
-    const cb=document.createElement('input'); cb.type='checkbox'; cb.dataset.idx=idx; cb.style.marginRight='8px';
-    cb.addEventListener('change', updateSelected); label.appendChild(cb);
-    const cardText=document.createElement('span'); cardText.textContent=`${c.rank}${suitSymbol(c.suit)}`;
-    cardText.style.color=(c.suit==='hearts'||c.suit==='diamonds')?'#cc241d':'#458588';
-    label.appendChild(cardText);
-    form.appendChild(label);
+    const cardDiv=document.createElement('div');
+    cardDiv.className='card';
+    cardDiv.style.width='96px';
+    cardDiv.style.height='132px';
+    cardDiv.style.fontSize='1.25rem';
+    cardDiv.style.display='flex';
+    cardDiv.style.flexDirection='column';
+    cardDiv.style.alignItems='center';
+    cardDiv.style.justifyContent='center';
+    cardDiv.style.cursor='pointer';
+    cardDiv.style.userSelect='none';
+    cardDiv.style.transition='transform .08s ease, box-shadow .08s ease';
+    cardDiv.dataset.idx=idx;
+
+    cardDiv.style.background = '#d5c4a1'; // same as hand cards
+    cardDiv.style.color = (c.suit==='hearts'||c.suit==='diamonds') ? '#cc241d' : '#458588';
+
+
+    const rankDiv=document.createElement('div'); rankDiv.className='rank'; rankDiv.textContent=c.rank;
+    const suitDiv=document.createElement('div'); suitDiv.className='suit '+c.suit; suitDiv.innerHTML=suitSymbol(c.suit);
+    suitDiv.style.fontSize='1.25rem';
+    suitDiv.style.marginTop='6px';
+    suitDiv.style.color=(c.suit==='hearts'||c.suit==='diamonds')?'#cc241d':'#458588';
+
+    cardDiv.appendChild(rankDiv); cardDiv.appendChild(suitDiv);
+
+    cardDiv.addEventListener('click',()=>{
+      if(cardDiv.classList.contains('selected')) cardDiv.classList.remove('selected');
+      else cardDiv.classList.add('selected');
+      updateSelected();
+    });
+
+    form.appendChild(cardDiv);
   });
   box.appendChild(form);
 
-  const discardBtn=document.createElement('button');
-  discardBtn.textContent='Discard Selected'; discardBtn.style.background='#b8bb26';
-  discardBtn.style.color='#1d2021'; discardBtn.style.padding='6px 12px'; discardBtn.style.border='none';
-  discardBtn.style.borderRadius='6px'; discardBtn.style.fontWeight='700'; discardBtn.style.cursor='pointer';
-  discardBtn.addEventListener('click', ()=>{
-    const checked=[...form.querySelectorAll('input[type=checkbox]:checked')].map(x=>parseInt(x.dataset.idx));
-    const total=checked.reduce((s,i)=>s+cardValue(G.hand[i].rank),0);
-    const maxPossible=G.hand.reduce((s,c)=>s+cardValue(c.rank),0);
+  const infoDiv=document.createElement('div');
+  infoDiv.id='selected-info';
+  infoDiv.style.marginTop='8px';
+  infoDiv.style.fontSize='1rem';
+  infoDiv.textContent='Selected: None (Total: 0)';
+  box.appendChild(infoDiv);
 
-    if(total<attackValue && maxPossible<attackValue){ 
+  const discardBtn=document.createElement('button');
+  discardBtn.textContent='Discard Selected';
+  discardBtn.style.background='#b8bb26';
+  discardBtn.style.color='#282828';
+  discardBtn.style.padding='8px 16px';
+  discardBtn.style.fontWeight='700';
+  discardBtn.style.border='none';
+  discardBtn.style.borderRadius='6px';
+  discardBtn.style.cursor='pointer';
+  discardBtn.addEventListener('click', ()=>{
+    const selectedCards = Array.from(form.querySelectorAll('.card.selected')).map(c=>parseInt(c.dataset.idx));
+    const total = selectedCards.reduce((s,i)=>s+cardValue(G.hand[i].rank),0);
+    const maxPossible = G.hand.reduce((s,c)=>s+cardValue(c.rank),0);
+
+    if(total<attackValue && maxPossible<attackValue){
       document.body.removeChild(modal); discardModal=null; 
       handlePlayerDefeat(`You could not discard enough cards to survive the enemy attack of ${attackValue}.`);
       return;
     }
 
     if(total<attackValue){
-      alert(`Selected cards total ${total} < attack ${attackValue}. Select more.`);
+      alert(`Total discard not enough. Selected total: ${total}, required: ${attackValue}`);
       return;
     }
 
-    const discardedCards = checked.map(i => G.hand[i]);
-    checked.sort((a,b)=>b-a).forEach(i => G.discard.unshift(G.hand.splice(i,1)[0]));
-    addLog(`Discarded ${discardedCards.map(c => c.rank + suitSymbol(c.suit)).join(', ')} to satisfy ${attackValue} damage (total ${total}).`);
+    // Move to discard
+    const toRemove = selectedCards.sort((a,b)=>b-a);
+    for(const idx of toRemove){
+      G.discard.unshift(G.hand.splice(idx,1)[0]);
+    }
 
     document.body.removeChild(modal); discardModal=null;
     renderAll();
     startNextTurn();
   });
+  box.appendChild(discardBtn);
 
-  const btnContainer=document.createElement('div'); btnContainer.style.display='flex'; btnContainer.style.justifyContent='flex-end';
-  btnContainer.appendChild(discardBtn); box.appendChild(btnContainer);
-
-  modal.appendChild(box); document.body.appendChild(modal);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
 
   function updateSelected(){
-    const checked=[...form.querySelectorAll('input[type=checkbox]:checked')].map(x=>parseInt(x.dataset.idx));
-    const total=checked.reduce((s,i)=>s+cardValue(G.hand[i].rank),0);
-    document.getElementById('selected-total').textContent=total;
-    const listText=checked.map(i=>`${G.hand[i].rank}${suitSymbol(G.hand[i].suit)}`).join(',')||'None';
-    document.getElementById('selected-list').textContent=listText;
-  }
-
-  const maxHandTotal=G.hand.reduce((s,c)=>s+cardValue(c.rank),0);
-  if(maxHandTotal<attackValue){
-    document.body.removeChild(modal); discardModal=null;
-    handlePlayerDefeat(`You could not discard enough cards to survive the enemy attack of ${attackValue}.`);
+    const selectedCards = Array.from(form.querySelectorAll('.card.selected'));
+    const total = selectedCards.reduce((s,c)=>s+cardValue(G.hand[parseInt(c.dataset.idx)].rank),0);
+    infoDiv.textContent = `Selected: ${selectedCards.length} (Total: ${total})`;
   }
 }
 
-// Enemy attack
+// Enemy attacks
 function enemyAttack(){
-  const stats=faceStats(G.enemy);
-  const effectiveAttack=Math.max(0,stats.attack-G.spadeShield);
-  if(effectiveAttack===0){ addLog('Enemy attack reduced to 0 by shields.'); return; }
-  showDiscardModal(effectiveAttack);
+  if(!G.enemy) return;
+  const stats = faceStats(G.enemy);
+  const attackValue = Math.max(0, stats.attack - G.spadeShield);
+  if(attackValue===0){
+    addLog('Enemy attack blocked by shield.');
+    startNextTurn();
+    return;
+  }
+  showDiscardModal(attackValue);
 }
 
-// Forfeit
-function forfeit(){ if(!G.gameOver) endGame('You forfeited the game.'); }
+// Player forfeit
+function yieldGame(){
+  endGame('You forfeited the game.');
+}
 
 // Flip Joker
 function flipJoker(){
@@ -476,14 +510,14 @@ function flipJoker(){
   renderAll();
 }
 
-// Handle defeat
-function handlePlayerDefeat(message){ endGame(message); }
+
+// Clear log
+el.clearLog.addEventListener('click', ()=>{G.log=[]; renderAll();});
 
 // Buttons
-el.playBtn.addEventListener('click',playSelected);
-el.yieldBtn.addEventListener('click',forfeit);
-el.flipJokerBtn.addEventListener('click',flipJoker);
-el.clearLog.addEventListener('click',()=>{ G.log=[]; renderAll(); });
+el.playBtn.addEventListener('click', playSelected);
+el.yieldBtn.addEventListener('click', yieldGame);
+el.flipJokerBtn.addEventListener('click', flipJoker);
 
-// Start
+// Start game
 startSolo();

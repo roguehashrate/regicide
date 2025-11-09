@@ -53,7 +53,7 @@
     }
     .panel .title {
       font-weight: 600;
-      color: #fabd2f;
+      color: #fabd2f; /* Ensure yellow for panel titles */
       margin-bottom: 0.5rem;
     }
 
@@ -148,9 +148,30 @@
       background-color: #83a598;
     }
 
-    /* Layout */
+    /* Stats boxes container (desktop & mobile) */
+    .stats-panel {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .stat-box {
+      flex: 1;
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: 1px solid #504945;
+      background: #3c3836;
+    }
+    .stat-box .title {
+      color: #fabd2f; /* Ensure yellow for Castle/Tavern/Discarded titles */
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Layout adjustments */
     @media(min-width:768px){
-      .game-grid { display: grid; grid-template-columns:1fr 2fr; gap:1rem; }
       .hand-container { display: grid; grid-template-columns: repeat(8, 72px); gap:0.5rem; overflow-x: visible; }
     }
   </style>
@@ -158,21 +179,21 @@
 <body>
   <div class="max-w-5xl mx-auto p-4 relative">
     <h1 class="text-3xl mb-4 text-center">Regicide</h1>
-    <!-- Rules link -->
     <a href="rules.html" class="absolute top-4 right-4 text-sm text-yellow-400 hover:text-yellow-300 font-semibold">Rules</a>
 
     <div id="enemy-card" class="enemy-card mb-4"></div>
 
-    <div class="flex flex-col md:flex-row justify-between mb-4 gap-2">
-      <div class="panel flex-1">
+    <!-- Stats panel (Castle / Tavern / Discard) -->
+    <div class="stats-panel">
+      <div class="stat-box">
         <div class="title">Castle</div>
         <div id="castle-count" class="text-lg font-semibold">--</div>
       </div>
-      <div class="panel flex-1">
+      <div class="stat-box">
         <div class="title">Tavern</div>
         <div id="tavern-count" class="text-lg font-semibold">--</div>
       </div>
-      <div class="panel flex-1">
+      <div class="stat-box">
         <div class="title">Discarded</div>
         <div id="discard-count" class="text-lg font-semibold">--</div>
       </div>
@@ -201,3 +222,4 @@
   <script src="regicide.js"></script>
 </body>
 </html>
+
