@@ -60,7 +60,6 @@
     .suit.hearts, .suit.diamonds { color: #fb4934; }
     .suit.spades, .suit.clubs { color: #83a598; }
 
-
     /* Panels */
     .panel {
       background: #3c3836;
@@ -79,9 +78,11 @@
       display: flex;
       overflow-x: auto;
       gap: 0.5rem;
-      padding-bottom: 0.5rem;
+      padding: 2rem 1rem 0 1rem; /* top + left/right extra space */
+      justify-content: flex-start;
+      -webkit-overflow-scrolling: touch;
     }
-    .hand-container .card { flex-shrink:0; }
+    .hand-container .card { flex-shrink: 0; }
 
     /* Buttons */
     .btn {
@@ -189,8 +190,15 @@
 
     /* Layout adjustments */
     @media(min-width:768px){
-      .hand-container { display: grid; grid-template-columns: repeat(8, 72px); gap:0.5rem; overflow-x: visible; }
+      .hand-container {
+        display: grid;
+        grid-template-columns: repeat(8, 72px);
+        gap:0.5rem;
+        overflow-x: visible;
+        padding: 0; /* desktop grid doesn't need extra padding */
+      }
     }
+
   </style>
 </head>
 <body>
