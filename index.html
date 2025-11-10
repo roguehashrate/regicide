@@ -192,12 +192,35 @@
       }
     }
 
+    /* Install & Rules buttons */
+    #install-btn, .rules-btn {
+      position: fixed;
+      top: 1rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fabd2f;
+      text-decoration: none;
+      z-index: 10000;
+    }
+    #install-btn { left: 1rem; }
+    .rules-btn { right: 1rem; }
+    #install-btn:hover, .rules-btn:hover { color: #fff176; }
+
+    #install-btn {
+      cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
+  <!-- Always visible Install button on top-left -->
+  <a id="install-btn">Install</a>
+  <!-- Rules button on top-right -->
+  <a href="rules.html" class="rules-btn">Rules</a>
+
   <div class="max-w-5xl mx-auto p-4 relative">
     <h1 class="text-3xl mb-4 text-center">Regicide</h1>
-    <a href="rules.html" class="absolute top-4 right-4 text-sm text-yellow-400 hover:text-yellow-300 font-semibold">Rules</a>
 
     <div id="enemy-card" class="enemy-card mb-4"></div>
 
@@ -237,5 +260,6 @@
   </div>
 
   <script src="regicide.js"></script>
+  <script src="install.js"></script>
 </body>
 </html>
