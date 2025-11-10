@@ -6,7 +6,6 @@
 <title>Regicide - Rules</title>
 <link rel="icon" type="icon-x" href="/assets/favicon.ico"/>
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Alegreya+SC&family=Cinzel:wght@700&display=swap" rel="stylesheet">
 
 <style>
@@ -17,14 +16,14 @@
     font-family: 'Alegreya SC', serif;
     margin: 0;
     padding: 0;
-    line-height: 1.7;
+    line-height: 1.8;
   }
 
   header {
     background: #3c3836;
-    padding: 1rem 2rem;
+    padding: 1.5rem 2rem;
     text-align: center;
-    border-bottom: 1px solid #504945;
+    border-bottom: 2px solid #504945;
   }
 
   h1, h2, h3 {
@@ -32,48 +31,47 @@
     font-family: 'Cinzel', serif;
     margin-top: 2rem;
     margin-bottom: 1rem;
+    line-height: 1.3;
   }
 
   main {
     max-width: 900px;
     margin: 2rem auto;
-    padding: 2.5rem;
+    padding: 2.5rem 2rem;
     background: #3c3836;
     border: 1px solid #504945;
     border-radius: 12px;
   }
 
   p {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 1.05rem;
   }
 
   ul, ol {
-    margin: 0.5rem 0 1rem 2rem;
+    margin: 0.75rem 0 1.5rem 2rem;
+    padding-left: 0;
+    line-height: 1.6;
   }
 
   li {
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.75rem;
   }
 
   strong {
     color: #fe8019;
-  }
-
-  footer {
-    text-align: center;
-    padding: 1rem;
-    color: #928374;
+    font-weight: 600;
   }
 
   a.btn {
     display: inline-block;
-    padding: 0.5rem 1rem;
+    padding: 0.65rem 1.25rem;
     background-color: #fabd2f;
     color: #282828;
-    font-weight: 600;
-    border-radius: 0.375rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
     text-decoration: none;
-    transition: transform 0.08s ease;
+    transition: transform 0.1s ease, background-color 0.2s ease;
     margin-bottom: 2rem;
   }
 
@@ -83,18 +81,22 @@
   }
 
   /* Highlight card suits */
-  .hearts { color: #fb4934; }
-  .diamonds { color: #fb4934; }
-  .spades { color: #83a598; }
-  .clubs { color: #83a598; }
+  .hearts, .diamonds { color: #fb4934; font-weight: 600; }
+  .spades, .clubs { color: #83a598; font-weight: 600; }
 
-  /* Extra spacing for sections */
   section {
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
   }
 
   section:last-of-type {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: #928374;
+    font-size: 0.95rem;
   }
 </style>
 </head>
@@ -128,7 +130,7 @@
       <li><strong>Step 1 - Play a card:</strong> Play one or more cards from your hand to attack the enemy.</li>
       <li><strong>Step 2 - Resolve suit powers:</strong> Apply effects based on card suits. Royal cards are immune to their own suit when attacked.</li>
       <li><strong>Step 3 - Deal damage:</strong> Apply damage to the enemy and check if defeated.</li>
-      <li><strong>Step 4 - Enemy attacks:</strong> Discard cards to survive enemy damage. Clubs, Hearts, Spades, or Diamonds on enemies do not affect enemies of the same suit (immunity applies).</li>
+      <li><strong>Step 4 - Enemy attacks:</strong> Discard cards to survive enemy damage. Enemy suits do not affect enemies of the same suit.</li>
     </ol>
   </section>
 
