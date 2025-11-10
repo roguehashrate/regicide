@@ -22,9 +22,7 @@
       color: #ebdbb2;
       font-family: 'Alegreya SC', serif;
     }
-    h1 {
-      color: #fabd2f;
-    }
+    h1 { color: #fabd2f; }
 
     /* Card styles */
     .card {
@@ -49,12 +47,8 @@
       outline: 2px solid #fabd2f;
     }
 
-    /* Softer drop shadow for card text */
     .card .rank,
-    .card .suit {
-      font-family: 'Cinzel', serif;
-    }
-
+    .card .suit { font-family: 'Cinzel', serif; }
     .card .rank { font-weight: 700; font-size: 18px; }
     .card .suit { font-size: 22px; margin-top: 6px; }
     .suit.hearts, .suit.diamonds { color: #fb4934; }
@@ -78,10 +72,13 @@
       display: flex;
       overflow-x: auto;
       gap: 0.5rem;
-      padding: 2rem 1rem 0 1rem; /* top + left/right extra space */
+      padding: 1.5rem 1rem 0 1rem; /* top + left/right padding added */
       justify-content: flex-start;
       -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none;  /* IE/Edge */
     }
+    .hand-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
     .hand-container .card { flex-shrink: 0; }
 
     /* Buttons */
@@ -93,7 +90,6 @@
       transition: transform 0.08s ease;
     }
     .btn:hover { transform: scale(1.05); }
-
     .btn-play { background-color: #fabd2f; color: #282828; }
     .btn-forfeit { background-color: #504945; color: #ebdbb2; }
     .btn-joker { background-color: #b8bb26; color: #282828; }
@@ -161,12 +157,9 @@
       cursor: pointer;
       margin-top: 10px;
     }
+    .modal-box button:hover { background-color: #83a598; }
 
-    .modal-box button:hover {
-      background-color: #83a598;
-    }
-
-    /* Stats boxes container (desktop & mobile) */
+    /* Stats boxes container */
     .stats-panel {
       display: flex;
       justify-content: space-between;
@@ -188,14 +181,14 @@
       margin-bottom: 0.5rem;
     }
 
-    /* Layout adjustments */
+    /* Desktop hand grid */
     @media(min-width:768px){
       .hand-container {
         display: grid;
         grid-template-columns: repeat(8, 72px);
-        gap:0.5rem;
+        gap: 0.5rem;
         overflow-x: visible;
-        padding: 0; /* desktop grid doesn't need extra padding */
+        padding: 0;
       }
     }
 
@@ -208,7 +201,6 @@
 
     <div id="enemy-card" class="enemy-card mb-4"></div>
 
-    <!-- Stats panel (Castle / Tavern / Discard) -->
     <div class="stats-panel">
       <div class="stat-box">
         <div class="title">Castle</div>
