@@ -177,18 +177,29 @@ function toggleSelect(idx){
 }
 
 // Log
+// Log with colored suits for both enemy and player cards
 function addLog(msg){
   const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 
-  // Replace card notations like "K♠" or "10♥" with colored spans
-  const formattedMsg = msg.replace(/([2-9AJQK]+)([♥♦♣♠])/g, (_, rank, suit) => {
+  // Function to wrap card/suit in color
+  function colorCard(rank, suit){
     let color = '';
-    if(suit==='♥' || suit==='♦') color='#fb4934';
-    else color='#83a598';
+    if(suit==='♥' || suit==='♦') color='#fb4934'; // red
+    else color='#83a598'; // blue-ish
     return `<span style="font-weight:700; color:${color};">${rank}${suit}</span>`;
-  });
+  }
 
-  // Wrap the log in a div with a little padding, subtle bg, and larger font
+  // Replace any card patterns like K♠, 10♥, J♦, etc.
+  const formattedMsg = msg.replace(/([2-9AJQK]+)([♥♦♣♠])/g, (_, rank, suit) => colorCard(rank, suit));
+
+  // Optional: highlight certain keywords like "Enemy", "Drew", "Discarded", "Joker" for clarity
+  const enhancedMsg = formattedMsg
+    .replace(/\bEnemy\b/g, `<span style="color:#fabd2f; font-weight:600;">Enemy</span>`)
+    .replace(/\bDrew\b/g, `<span style="color:#8ec07c; font-weight:600;">Drew</span>`)
+    .replace(/\bDiscarded\b/g, `<span style="color:#fe8019; font-weight:600;">Discarded</span>`)
+    .replace(/\bJoker\b/g, `<span style="color:#b8bb26; font-weight:600;">Joker</span>`);
+
+  // Wrap in a div with padding, subtle bg, and slightly larger font
   const logEntry = `
     <div style="
       margin-bottom:3px; 
@@ -196,8 +207,9 @@ function addLog(msg){
       border-radius:5px; 
       font-size:0.95rem; 
       line-height:1.2;
+      background: rgba(70,70,70,0.15);
     ">
-      <span style="opacity:0.7;">${time}</span> — ${formattedMsg}
+      <span style="opacity:0.7;">${time}</span> — ${enhancedMsg}
     </div>
   `;
 
