@@ -178,9 +178,36 @@ function toggleSelect(idx){
 
 // Log
 function addLog(msg){
-  G.log.unshift(`${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} — ${msg}`);
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+  // Replace card notations like "K♠" or "10♥" with colored spans
+  const formattedMsg = msg.replace(/([2-9AJQK]+)([♥♦♣♠])/g, (_, rank, suit) => {
+    let color = '';
+    if(suit==='♥' || suit==='♦') color='#fb4934';
+    else color='#83a598';
+    return `<span style="font-weight:700; color:${color};">${rank}${suit}</span>`;
+  });
+
+  // Wrap the log in a div with a little padding, subtle bg, and larger font
+  const logEntry = `
+    <div style="
+      margin-bottom:3px; 
+      padding:3px 6px; 
+      border-radius:5px; 
+      font-size:0.95rem; 
+      line-height:1.2;
+    ">
+      <span style="opacity:0.7;">${time}</span> — ${formattedMsg}
+    </div>
+  `;
+
+  G.log.unshift(logEntry);
   if(G.log.length>200) G.log.length=200;
+
+  // Render
+  el.log.innerHTML=G.log.join('');
 }
+
 
 // Play selected
 function playSelected(){
