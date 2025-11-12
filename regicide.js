@@ -138,6 +138,10 @@ function renderAll(){
         </div>
     </div>
 `;
+el.enemyCard.style.opacity = 0;
+el.enemyCard.style.transition = 'opacity 0.4s ease';
+requestAnimationFrame(() => { el.enemyCard.style.opacity = 1; });
+
   } else {
     el.enemyCard.innerHTML=`<div class="p-3">No enemy.</div>`;
   }
@@ -163,6 +167,16 @@ function renderAll(){
 
   // Log
   el.log.innerHTML=G.log.map(l=>`<div class="mb-1">${l}</div>`).join('');
+  const firstChild = el.log.firstElementChild;
+if(firstChild){
+  firstChild.style.opacity = 0;
+  firstChild.style.transform = 'translateY(-10px)';
+  firstChild.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+  requestAnimationFrame(() => {
+    firstChild.style.opacity = 1;
+    firstChild.style.transform = 'translateY(0)';
+  });
+}
 
   // Joker button
   el.flipJokerBtn.textContent=`Joker (${G.jokers} left)`;
@@ -174,6 +188,7 @@ function toggleSelect(idx){
   if(G.selectedIndices.has(idx)) G.selectedIndices.delete(idx);
   else G.selectedIndices.add(idx);
   renderAll();
+
 }
 
 // Log
