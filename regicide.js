@@ -181,44 +181,60 @@ function toggleSelect(idx){
 function addLog(msg){
   const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 
-  // Function to wrap card/suit in color
+  // Color a single card
   function colorCard(rank, suit){
-    let color = '';
-    if(suit==='♥' || suit==='♦') color='#fb4934'; // red
-    else color='#83a598'; // blue-ish
-    return `<span style="font-weight:700; color:${color};">${rank}${suit}</span>`;
+    const color = (suit==='♥' || suit==='♦') ? '#fb4934' : '#83a598';
+    return `<span style="font-weight:700; color:${color}">${rank}${suit}</span>`;
   }
 
-  // Replace any card patterns like K♠, 10♥, J♦, etc.
-  const formattedMsg = msg.replace(/([2-9AJQK]+)([♥♦♣♠])/g, (_, rank, suit) => colorCard(rank, suit));
+  // Replace card patterns
+  let formattedMsg = msg.replace(/([2-9AJQK]+)([♥♦♣♠])/g, (_, rank, suit) => colorCard(rank, suit));
 
-  // Optional: highlight certain keywords like "Enemy", "Drew", "Discarded", "Joker" for clarity
-  const enhancedMsg = formattedMsg
-    .replace(/\bEnemy\b/g, `<span style="color:#fabd2f; font-weight:600;">Enemy</span>`)
-    .replace(/\bDrew\b/g, `<span style="color:#8ec07c; font-weight:600;">Drew</span>`)
-    .replace(/\bDiscarded\b/g, `<span style="color:#fe8019; font-weight:600;">Discarded</span>`)
-    .replace(/\bJoker\b/g, `<span style="color:#b8bb26; font-weight:600;">Joker</span>`);
+  // Keywords
+  const keywords = {
+    'Enemy': '#fe8019',
+    'Drew': '#d3869b',
+    'Discarded': '#d3869b',
+    'Joker': '#b8bb26',
+    'Diamonds': '#fb4934',
+    'Hearts': '#fb4934',
+    'Spades': '#83a598',
+    'Clubs': '#83a598'
+  };
+  for(const [kw, color] of Object.entries(keywords)){
+    const re = new RegExp(`\\b${kw}\\b`, 'g');
+    formattedMsg = formattedMsg.replace(re, `<span style="color:${color}; font-weight:600">${kw}</span>`);
+  }
 
-  // Wrap in a div with padding, subtle bg, and slightly larger font
+  // Color the total attack values
+  // Matches patterns like "Total attack value: 4 → 8" or "Total attack value: 5"
+  formattedMsg = formattedMsg.replace(/(Total attack value:\s*)([\d→\s]+)/, (_, label, totals) => {
+    // Wrap each number individually
+    const coloredTotals = totals.replace(/\d+/g, num => `<span style="color:#fabd2f; font-weight:700">${num}</span>`);
+    return label + coloredTotals;
+  });
+
+  // Wrap in a div
   const logEntry = `
     <div style="
       margin-bottom:3px; 
-      padding:3px 6px; 
+      padding:4px 8px; 
       border-radius:5px; 
       font-size:0.95rem; 
       line-height:1.2;
       background: rgba(70,70,70,0.15);
     ">
-      <span style="opacity:0.7;">${time}</span> — ${enhancedMsg}
+      <span style="opacity:0.7">${time}</span> — ${formattedMsg}
     </div>
   `;
 
   G.log.unshift(logEntry);
   if(G.log.length>200) G.log.length=200;
-
-  // Render
-  el.log.innerHTML=G.log.join('');
+  el.log.innerHTML = G.log.join('');
 }
+
+
+
 
 
 // Play selected
